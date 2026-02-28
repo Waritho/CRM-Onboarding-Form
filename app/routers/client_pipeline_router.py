@@ -24,9 +24,9 @@ router = APIRouter(
 @router.post("/config")
 def create_or_update_pipeline(
     payload: PipelineConfigCreate,
-    db: Session = Depends(get_db),
     current_client = Depends(get_current_client)
 ):
+    current_client, db = current_client
     upsert_pipeline_config(
         db=db,
         client_id=current_client.id,
@@ -39,8 +39,8 @@ def create_or_update_pipeline(
 # GET PIPELINE
 @router.get("/config", response_model=PipelineConfigResponse)
 def fetch_pipeline(
-    db: Session = Depends(get_db),
     current_client = Depends(get_current_client)
 ):
+    current_client , db = current_client
     data = get_pipeline_config(db, current_client.id)
     return data

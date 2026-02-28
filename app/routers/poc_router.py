@@ -24,18 +24,18 @@ router = APIRouter(
 @router.post("", response_model=ClientPOCResponse)
 def create_poc(
     data: ClientPOCCreate,
-    current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    current_client = Depends(get_current_client)
 ):
+    current_client , db = current_client
     return create_new_poc(current_client.id, data, db)
 
 
 # GET ALL POCS
 @router.get("", response_model=list[ClientPOCResponse])
 def get_all_pocs(
-    current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    current_client = Depends(get_current_client)
 ):
+    current_client , db = current_client
     return get_pocs_by_client(current_client.id, db)
 
 
@@ -45,6 +45,6 @@ def update_poc_details(
     poc_id: int,
     data: ClientPOCUpdate,
     current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
 ):
+    current_client , db = current_client
     return update_poc(current_client.id, poc_id, data, db)

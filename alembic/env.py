@@ -23,7 +23,7 @@ import os
 sys.path.append(os.getcwd())
 
 from app.database import Base
-from app.models import client, otp, client_basic_details, POC_details, client_integrations, client_tentative_counts, integrations_master, document_types ,client_crm_info, crm_migration_documents, module_master, client_module_comment, client_modules, client_pipeline # import all modelsalembic revision --autogenerate -m "create client crm info"
+from app.models import client, otp, client_basic_details, POC_details, client_integrations, client_tentative_counts, integrations_master, document_types ,client_crm_info, crm_migration_documents, module_master, client_module_comment, client_modules, client_pipeline, client_form_builder,client_domain_config,client_onboarding_documents,onboarding_document_master,client_payment_provider # import all modelsalembic revision --autogenerate -m "create client crm info"
 from app.config import settings
 
 target_metadata = Base.metadata

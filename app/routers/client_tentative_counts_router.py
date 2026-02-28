@@ -18,9 +18,9 @@ router = APIRouter(prefix="/client/tentative-counts",tags=["Client Tentative Cou
 # GET TENTATIVE COUNTS
 @router.get("/", response_model=TentativeCountsResponse)
 def fetch_tentative_counts(
-    db: Session = Depends(get_db),
     current_user=Depends(get_current_client)
 ):
+    current_user , db = current_user
     client_id = current_user.id
 
     record = get_tentative_counts(client_id, db)
@@ -31,9 +31,9 @@ def fetch_tentative_counts(
 @router.post("/", response_model=TentativeCountsResponse)
 def save_tentative_counts(
     data: TentativeCountsUpsert,
-    db: Session = Depends(get_db),
     current_user=Depends(get_current_client)
 ):
+    current_user , db = current_user
     client_id = current_user.id
 
     record = upsert_tentative_counts(client_id, data, db)

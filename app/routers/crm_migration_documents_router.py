@@ -19,9 +19,9 @@ router = APIRouter(
 # GET ALL DOCUMENTS
 @router.get("/", response_model=DocumentListResponse)
 def fetch_documents(
-    token_data = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    token_data = Depends(get_current_client)
 ):
+    token_data , db=token_data
     client_id = token_data.id
 
     docs = get_client_documents(client_id, db)
@@ -33,9 +33,9 @@ def fetch_documents(
 def upload_client_document(
     document_type_id: int,
     file: UploadFile = File(...),
-    token_data = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    token_data = Depends(get_current_client)
 ):
+    token_data , db=token_data
     client_id = token_data.id
 
     result = upload_document(client_id, document_type_id, file, db)

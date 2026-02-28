@@ -20,17 +20,18 @@ router = APIRouter(prefix="/client", tags=["Client"])
 def save_basic_details(
     data: ClientBasicDetailsSchema,
     current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    
 ):
+    current_client , db = current_client
     return upsert_basic_details(current_client.id, data, db)
 
 
 # GET BASIC DETAILS
 @router.get("/basic-details", response_model=ClientBasicDetailsResponse)
 def fetch_basic_details(
-    current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    current_client = Depends(get_current_client)
 ):
+    current_client , db = current_client
     details = get_basic_details(current_client.id, db)
 
     if not details:
@@ -42,7 +43,7 @@ def fetch_basic_details(
 @router.put("/basic-details", response_model=ClientBasicDetailsResponse)
 def update_basic_details(
     data: ClientBasicDetailsSchema,
-    current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    current_client = Depends(get_current_client)
 ):
+    current_client , db = current_client
     return upsert_basic_details(current_client.id, data, db)

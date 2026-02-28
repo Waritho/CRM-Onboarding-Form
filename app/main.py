@@ -13,7 +13,10 @@ from app.routers import client_crm_info_router
 from app.routers import crm_migration_documents_router
 from app.routers import client_module_router
 from app.routers import client_pipeline_router
-
+from app.routers import client_form_builder_router
+from app.routers import client_domain_router
+from app.routers import client_onboarding_document_router
+from app.routers import client_payment_provider_router
 
 app = FastAPI(title="CRM Onboarding System") 
 
@@ -36,7 +39,7 @@ app.include_router(client_integrations_router.router)
 app.include_router(client_crm_info_router.router)
 
 # Client Old CRM data migration
-from app.routers import crm_migration_documents_router
+app.include_router(crm_migration_documents_router.router)
 
 # Modules and Subscription
 app.include_router(client_module_router.router)
@@ -44,6 +47,17 @@ app.include_router(client_module_router.router)
 # Tags and stages pipeline
 app.include_router(client_pipeline_router.router)
 
+# Application form
+app.include_router(client_form_builder_router.router)
+
+# Domain
+app.include_router(client_domain_router.router)
+
+# Onboarding Documnets
+app.include_router(client_onboarding_document_router.router)
+
+# Payment Gateway
+app.include_router(client_payment_provider_router.router)
 
 @app.get("/")
 def root():

@@ -35,4 +35,4 @@ def get_current_client(
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     
-    return client 
+    return client,db

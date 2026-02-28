@@ -21,8 +21,8 @@ router = APIRouter(prefix="/client/modules", tags=["Client Modules"])
 @router.get("", response_model=ClientModulesResponse)
 def fetch_client_modules(
     current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
 ):
+    current_client , db = current_client
     result = get_client_modules(current_client.id, db)
 
     if not result:

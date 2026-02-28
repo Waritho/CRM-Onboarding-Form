@@ -23,9 +23,9 @@ router = APIRouter(
 # GET CRM INFO
 @router.get("/", response_model=CRMInfoResponse)
 def fetch_crm_info(
-    token_data = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    token_data = Depends(get_current_client)
 ):
+    token_data, db = token_data
     client_id = token_data.id
 
     record = get_crm_info(client_id, db)
@@ -37,8 +37,9 @@ def fetch_crm_info(
 def save_crm_info(
     payload: CRMInfoUpdate,
     token_data = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    
 ):
+    token_data , db = token_data
     client_id = token_data.id
 
     record = upsert_crm_info(client_id, payload, db)
