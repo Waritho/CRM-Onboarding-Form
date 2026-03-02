@@ -1,0 +1,39 @@
+services:
+  # ─── FastAPI Web Service ───────────────────────────────────────────
+  - type: web
+    name: crm-onboarding-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash scrpit.sh
+    envVars:
+      - key: DATABASE_URL
+        sync: false   # Set this manually in Render dashboard
+      - key: SECRET_KEY
+        sync: false   # Set this manually in Render dashboard
+      - key: ALGORITHM
+        value: HS256
+      - key: OTP_EXPIRY_MINUTES
+        value: "2"
+      - key: OTP_MAX_ATTEMPTS
+        value: "3"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      # Celery / Redis — set manually in dashboard after creating Redis instance
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: CELERY_RESULT_BACKEND
+        sync: false
+      # Cloudinary — set manually in dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # ZeptoMail — set manually in dashboard
+      - key: ZEPTOMAIL_API_TOKEN
+        sync: false
+      - key: ZEPTOMAIL_FROM_EMAIL
+        sync: false
+      - key: ZEPTOMAIL_FROM_NAME
+        sync: false
