@@ -6,10 +6,15 @@ from app.models.otp import OTP
 from app.utils.otp_generator import generate_otp
 from app.utils.jwt_handler import create_access_token, create_refresh_token
 from app.config import settings
+from app.tasks.email_tasks import send_otp_email_task
 
 
 # SEND OTP
 def send_otp_service(email: str, db: Session):
+    """
+    Generates an OTP, saves it to the database, and dispatches 
+    a background task to send the email.
+    """
     # Get or create client
     client = db.query(Client).filter(Client.email == email).first()
 
@@ -51,13 +56,13 @@ def send_otp_service(email: str, db: Session):
     db.add(otp_entry)
     db.commit()
 
-    # TODO: replace with real email sender
-    print(f"OTP for {email}: {otp_code}")
+    # ASYNC Call: Send OTP via email (runs in background via Celery)
+    send_otp_email_task.delay(email, otp_code)
 
     return {"message": "OTP sent successfully"}
 
 
-# VERIFY OTP
+# VERIFY OTP (LOGIN)
 def verify_otp_service(email: str, otp: str, db: Session):
     client = db.query(Client).filter(Client.email == email).first()
 
