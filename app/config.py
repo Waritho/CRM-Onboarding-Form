@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = Field(default="redis://127.0.0.1:6379/0", env="CELERY_BROKER_URL")
     CELERY_RESULT_BACKEND: str = Field(default="redis://127.0.0.1:6379/1", env="CELERY_RESULT_BACKEND")
 
+    # ====== NEW: Cloudinary Settings ======
+    CLOUDINARY_CLOUD_NAME: str = Field(..., env="CLOUDINARY_CLOUD_NAME")
+    CLOUDINARY_API_KEY: str = Field(..., env="CLOUDINARY_API_KEY")
+    CLOUDINARY_API_SECRET: str = Field(..., env="CLOUDINARY_API_SECRET")
+
     class Config:
         env_file = ".env"
         case_sensitive = True

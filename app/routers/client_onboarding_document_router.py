@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile, Form
 from app.utils.dependencies import get_current_client
+from app.utils.cloudinary_handler import upload_to_cloudinary
 
 from app.schemas.client_onboarding_document_schema import (
-    DocumentUploadRequest,
     DocumentResponse
 )
 
@@ -31,16 +31,23 @@ def fetch_documents(
 
 @router.post("/")
 def upload_document(
-    payload: DocumentUploadRequest,
+    code: str = Form(...),
+    file: UploadFile = File(...),
     token_data = Depends(get_current_client)
 ):
     token_data, db = token_data
     client_id = token_data.id
 
+    # Use the utility to upload
+    cloudinary_url = upload_to_cloudinary(
+        file=file,
+        folder=f"onboarding/client_{client_id}"
+    )
+
     return upload_or_replace_document(
         client_id,
-        payload.code,
-        payload.file_url,
+        code,
+        cloudinary_url,
         db
     )
 

@@ -1,4 +1,3 @@
-import os
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, UploadFile
@@ -6,9 +5,7 @@ from fastapi import HTTPException, UploadFile
 from app.models.crm_migration_documents import CRMMigrationDocument
 from app.models.document_types import DocumentType
 from app.models.client_crm_info import ClientCRMInfo
-
-
-UPLOAD_BASE = "uploads"
+from app.utils.cloudinary_handler import upload_to_cloudinary
 
 
 # GET ALL DOCUMENTS FOR CLIENT
@@ -74,15 +71,11 @@ def upload_document(
     if not doc_type:
         raise HTTPException(status_code=404, detail="Invalid document type")
 
-    # -------- CREATE DIRECTORY --------
-    dir_path = f"{UPLOAD_BASE}/client_{client_id}/document_type_{document_type_id}"
-    os.makedirs(dir_path, exist_ok=True)
-
-    file_path = f"{dir_path}/{file.filename}"
-
-    # -------- SAVE FILE --------
-    with open(file_path, "wb") as f:
-        f.write(file.file.read())
+    # -------- UPLOAD TO CLOUDINARY --------
+    file_path = upload_to_cloudinary(
+        file=file,
+        folder=f"migration/client_{client_id}/document_type_{document_type_id}"
+    )
 
     # -------- UPSERT DB --------
     record = db.query(CRMMigrationDocument).filter(
