@@ -15,4 +15,4 @@ fi
 
 # 3. Start FastAPI with Uvicorn
 echo "==> Starting FastAPI app with Uvicorn..."
-exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}
+exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
