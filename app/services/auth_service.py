@@ -1,12 +1,16 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
+import logging
 
 from app.models.client import Client
 from app.models.otp import OTP
 from app.utils.otp_generator import generate_otp
 from app.utils.jwt_handler import create_access_token, create_refresh_token
 from app.config import settings
-from app.tasks.email_tasks import send_otp_email_task
+from app.tasks.email_tasks import send_otp_email_task, send_otp_email_task_sync
+
+logger = logging.getLogger(__name__)
+
 
 
 # SEND OTP
@@ -56,8 +60,13 @@ def send_otp_service(email: str, db: Session):
     db.add(otp_entry)
     db.commit()
 
-    # ASYNC Call: Send OTP via email (runs in background via Celery)
-    send_otp_email_task.delay(email, otp_code)
+    # Send OTP via email (Celery if available, otherwise sync)
+    if send_otp_email_task is not None:
+        send_otp_email_task.delay(email, otp_code)
+        logger.info(f"OTP email dispatched via Celery for {email}")
+    else:
+        send_otp_email_task_sync(email, otp_code)
+        logger.info(f"OTP email sent synchronously for {email} (Celery unavailable)")
 
     return {"message": "OTP sent successfully"}
 
