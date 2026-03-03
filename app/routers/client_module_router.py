@@ -36,8 +36,8 @@ def fetch_client_modules(
 def create_client_modules(
     payload: ClientModulesUpsertRequest,
     current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
 ):
+    current_client , db = current_client
     try:
         return upsert_client_modules(
             client_id=current_client.id,
@@ -53,9 +53,9 @@ def create_client_modules(
 @router.put("", response_model=ClientModulesResponse)
 def update_client_modules(
     payload: ClientModulesUpsertRequest,
-    current_client = Depends(get_current_client),
-    db: Session = Depends(get_db)
+    current_client = Depends(get_current_client),   
 ):
+    current_client , db = current_client
     try:
         return upsert_client_modules(
             client_id=current_client.id,
