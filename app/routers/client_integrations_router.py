@@ -26,7 +26,6 @@ router = APIRouter(
 @router.get("/", response_model=IntegrationListResponse)
 def fetch_integrations(
     token_data: dict = Depends(get_current_client),
-    
 ):
     token_data , db = token_data
     client_id = token_data.id
@@ -41,8 +40,8 @@ def fetch_integrations(
 def save_integrations(
     payload: List[IntegrationConfig],
     token_data: dict = Depends(get_current_client),
-    db: Session = Depends(get_db)
 ):
+    token_data , db = token_data
     client_id = token_data.id
 
     result = upsert_client_integrations(client_id, payload, db)
