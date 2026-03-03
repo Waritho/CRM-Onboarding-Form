@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel , HttpUrl
 
 
 class ClientBasicDetailsSchema(BaseModel):
@@ -7,7 +7,7 @@ class ClientBasicDetailsSchema(BaseModel):
     state: str
     city: str
     address: str
-    website: str
+    website: HttpUrl 
 
 
 class ClientBasicDetailsResponse(ClientBasicDetailsSchema):
