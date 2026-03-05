@@ -59,6 +59,10 @@ app.include_router(client_onboarding_document_router.router)
 # Payment Gateway
 app.include_router(client_payment_provider_router.router)
 
+# Client Submission
+from app.routers import client_submission_router
+app.include_router(client_submission_router.router)
+
 @app.get("/")
 def root():
     return {"message": "CRM Backend Running"}

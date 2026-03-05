@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.utils.dependencies import get_current_client
+from app.utils.submission_guard import ensure_not_submitted
 from app.schemas.client_schema import (
     ClientBasicDetailsSchema,
     ClientBasicDetailsResponse
@@ -22,7 +23,8 @@ def save_basic_details(
     current_client = Depends(get_current_client),
     
 ):
-    current_client , db = current_client
+    current_client, db = current_client
+    ensure_not_submitted((current_client, db))
     return upsert_basic_details(current_client.id, data, db)
 
 
@@ -45,5 +47,6 @@ def update_basic_details(
     data: ClientBasicDetailsSchema,
     current_client = Depends(get_current_client)
 ):
-    current_client , db = current_client
+    current_client, db = current_client
+    ensure_not_submitted((current_client, db))
     return upsert_basic_details(current_client.id, data, db)

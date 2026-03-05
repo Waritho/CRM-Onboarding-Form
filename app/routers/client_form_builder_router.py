@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.utils.dependencies import get_current_client
+from app.utils.submission_guard import ensure_not_submitted
 
 from app.schemas.client_form_builder_schema import (
     FormConfigCreate,
@@ -27,6 +28,7 @@ def create_or_update_form_config(
     current_client = Depends(get_current_client)
 ):
     current_client, db = current_client
+    ensure_not_submitted((current_client, db))
 
     upsert_form_config(
         db=db,

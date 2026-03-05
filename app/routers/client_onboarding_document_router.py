@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, File, UploadFile, Form
 from app.utils.dependencies import get_current_client
+from app.utils.submission_guard import ensure_not_submitted
 from app.utils.cloudinary_handler import upload_to_cloudinary
 
 from app.schemas.client_onboarding_document_schema import (
@@ -36,6 +37,7 @@ def upload_document(
     token_data = Depends(get_current_client)
 ):
     token_data, db = token_data
+    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     # Use the utility to upload

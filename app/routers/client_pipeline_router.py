@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.utils.dependencies import get_current_client
+from app.utils.submission_guard import ensure_not_submitted
 
 from app.schemas.client_pipeline_schema import (
     PipelineConfigCreate,
@@ -27,6 +28,7 @@ def create_or_update_pipeline(
     current_client = Depends(get_current_client)
 ):
     current_client, db = current_client
+    ensure_not_submitted((current_client, db))
     upsert_pipeline_config(
         db=db,
         client_id=current_client.id,

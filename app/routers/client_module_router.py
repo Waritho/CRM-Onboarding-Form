@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.utils.dependencies import get_current_client
+from app.utils.submission_guard import ensure_not_submitted
 
 from app.schemas.client_module_schema import (
     ClientModulesResponse,
@@ -37,7 +38,8 @@ def create_client_modules(
     payload: ClientModulesUpsertRequest,
     current_client = Depends(get_current_client),
 ):
-    current_client , db = current_client
+    current_client, db = current_client
+    ensure_not_submitted((current_client, db))
     try:
         return upsert_client_modules(
             client_id=current_client.id,
@@ -55,7 +57,8 @@ def update_client_modules(
     payload: ClientModulesUpsertRequest,
     current_client = Depends(get_current_client),   
 ):
-    current_client , db = current_client
+    current_client, db = current_client
+    ensure_not_submitted((current_client, db))
     try:
         return upsert_client_modules(
             client_id=current_client.id,

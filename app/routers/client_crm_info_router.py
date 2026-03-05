@@ -12,6 +12,7 @@ from app.services.client_crm_info_service import (
 )
 
 from app.utils.dependencies import get_current_client
+from app.utils.submission_guard import ensure_not_submitted
 
 
 router = APIRouter(
@@ -39,7 +40,8 @@ def save_crm_info(
     token_data = Depends(get_current_client),
     
 ):
-    token_data , db = token_data
+    token_data, db = token_data
+    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     record = upsert_crm_info(client_id, payload, db)
