@@ -48,6 +48,15 @@ def get_resource_type(content_type: str) -> str:
     return "raw"
 
 
+def get_file_extension(filename: str) -> str:
+    """
+    Extract file extension from filename.
+    """
+    if "." in filename:
+        return filename.rsplit(".", 1)[1].lower()
+    return ""
+
+
 def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
     """
     Uploads a file to Cloudinary and returns the secure URL.
@@ -103,6 +112,13 @@ def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
                 status_code=500,
                 detail="Cloudinary did not return a valid URL."
             )
+
+        # For raw files (PDFs, docs), append the file extension to the URL
+        # This ensures browsers recognize the file type and handle it correctly
+        if resource_type == "raw":
+            file_extension = get_file_extension(file.filename)
+            if file_extension:
+                secure_url = f"{secure_url}.{file_extension}"
 
         return secure_url
 
