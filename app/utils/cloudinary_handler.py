@@ -1,4 +1,5 @@
 import logging
+import re
 import cloudinary
 import cloudinary.uploader
 from fastapi import UploadFile, HTTPException
@@ -6,8 +7,12 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Initialize Cloudinary Configuration only if credentials are provided
-if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY and settings.CLOUDINARY_API_SECRET:
+# Configure Cloudinary if credentials are provided
+if (
+    settings.CLOUDINARY_CLOUD_NAME
+    and settings.CLOUDINARY_API_KEY
+    and settings.CLOUDINARY_API_SECRET
+):
     cloudinary.config(
         cloud_name=settings.CLOUDINARY_CLOUD_NAME,
         api_key=settings.CLOUDINARY_API_KEY,
@@ -18,17 +23,29 @@ if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY and settings.C
 else:
     logger.warning("Cloudinary credentials not set. File uploads will fail.")
 
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Remove spaces and special characters from filename
+    """
+    name = filename.rsplit(".", 1)[0]
+    name = re.sub(r"\s+", "_", name)          # replace spaces with underscore
+    name = re.sub(r"[^\w\-]", "", name)       # remove special characters
+    return name
+
+
 def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
     """
     Uploads a file to Cloudinary and returns the secure URL.
-    
+
     Args:
-        file: The file object from FastAPI
-        folder: The folder name in Cloudinary (e.g., 'clients/101')
-        
+        file: FastAPI UploadFile object
+        folder: Target folder in Cloudinary
+
     Returns:
-        The secure URL of the uploaded file.
+        Secure URL of uploaded file
     """
+
     if not settings.CLOUDINARY_CLOUD_NAME:
         raise HTTPException(
             status_code=503,
@@ -36,26 +53,32 @@ def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
         )
 
     try:
-        # Read the file content
+        # Read file content
         file_content = file.file.read()
-        
+
+        # Clean filename
+        clean_filename = sanitize_filename(file.filename)
+
         # Upload to Cloudinary
         upload_result = cloudinary.uploader.upload(
             file_content,
             folder=folder,
-            resource_type="auto",  # Automatically detect if it's an image or PDF
-            public_id=file.filename.split('.')[0]  # Optional: use original filename
+            resource_type="auto",     # Automatically detect image/pdf/other
+            public_id=clean_filename,
+            use_filename=True,
+            unique_filename=True
         )
-        
-        # Reset the file pointer just in case it's needed elsewhere
+
+        # Reset file pointer if needed later
         file.file.seek(0)
-        
-        # Return the secure SSL URL
+
+        # Return secure URL
         return upload_result.get("secure_url")
 
     except Exception as e:
         logger.error(f"Cloudinary Upload Error: {str(e)}")
+
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Failed to upload document to Cloudinary: {str(e)}"
         )
