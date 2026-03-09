@@ -8,9 +8,10 @@ from app.models.client_form_builder import (
     FormSection
 )
 
-from app.schemas.client_form_builder_schema import FormConfigCreate
-
-
+from app.schemas.client_form_builder_schema import (
+    FormConfigCreate,
+    FormUIConfigResponse,
+)
 
 # UPSERT FORM CONFIG (FULL REPLACE)
 
@@ -87,19 +88,14 @@ def upsert_form_config(
                         detail=f"Field {field.field_id} does not belong to section {section.section_id}"
                     )
 
-                # Enforce rules
-                if not section.is_enabled:
-                    is_enabled = False
-                    is_required = False
-                else:
-                    is_enabled = field.is_enabled
-                    is_required = field.is_required if field.is_enabled else False
+                # If the parent section is disabled, force this field off too
+                is_enabled = field.is_enabled if section.is_enabled else False
 
                 field_obj = ClientFormField(
                     client_id=client_id,
                     field_id=field.field_id,
                     is_enabled=is_enabled,
-                    is_required=is_required
+                    is_required=False  # Not used in this project; column kept for schema compat
                 )
 
                 db.add(field_obj)
@@ -116,47 +112,86 @@ def upsert_form_config(
 
 
 
-# GET FORM CONFIG (NESTED RESPONSE)
+# GET FORM CONFIG — FULL UI HYDRATION (Master data + client state merged)
 
-def get_form_config(db: Session, client_id: int):
+def get_form_config(db: Session, client_id: int) -> dict:
+    """
+    Returns ALL active sections and their fields from the master tables,
+    with per-client is_enabled state overlaid on top.
 
-    sections = db.query(ClientFormSection).filter(
-        ClientFormSection.client_id == client_id
-    ).all()
+    A brand-new client will see every section and field defaulted to
+    is_enabled=False, which is the safe default.
+    """
 
-    fields = db.query(ClientFormField).filter(
-        ClientFormField.client_id == client_id
-    ).all()
+    # 1. Fetch all active master sections ordered by sort order
+    master_sections = (
+        db.query(FormSection)
+        .filter(FormSection.is_active == True)
+        .order_by(FormSection.default_sort_order)
+        .all()
+    )
 
-    # Build map: section_id → fields
-    section_field_map = {}
+    # 2. Fetch all active master fields ordered by sort order
+    master_fields = (
+        db.query(FormFieldMaster)
+        .filter(FormFieldMaster.is_active == True)
+        .order_by(FormFieldMaster.default_sort_order)
+        .all()
+    )
 
-    for field in fields:
-        master_field = db.query(FormFieldMaster).filter(
-            FormFieldMaster.id == field.field_id
-        ).first()
+    # 3. Build lookup maps for client-specific state — O(1) access
+    #    Key: section_id → ClientFormSection row
+    client_section_map = {
+        row.section_id: row
+        for row in db.query(ClientFormSection)
+                     .filter(ClientFormSection.client_id == client_id)
+                     .all()
+    }
 
-        if not master_field:
-            continue
+    #    Key: field_id → ClientFormField row
+    client_field_map = {
+        row.field_id: row
+        for row in db.query(ClientFormField)
+                     .filter(ClientFormField.client_id == client_id)
+                     .all()
+    }
 
-        section_field_map.setdefault(master_field.section_id, []).append({
-            "id": field.id,
-            "field_id": field.field_id,
-            "is_enabled": field.is_enabled,
-            "is_required": field.is_required
-        })
+    # 4. Group master fields by section_id for easy iteration
+    fields_by_section: dict = {}
+    for field in master_fields:
+        fields_by_section.setdefault(field.section_id, []).append(field)
 
-    response_sections = []
+    # 5. Merge master sections + client state
+    sections_out = []
 
-    for section in sections:
-        response_sections.append({
-            "id": section.id,
-            "section_id": section.section_id,
-            "is_enabled": section.is_enabled,
-            "comment_text": section.comment_text,
-            "fields": section_field_map.get(section.section_id, [])
+    for ms in master_sections:
+        client_section = client_section_map.get(ms.id)
+
+        # Merge per-field state
+        fields_out = []
+        for mf in fields_by_section.get(ms.id, []):
+            client_field = client_field_map.get(mf.id)
+            fields_out.append({
+                "field_id":   mf.id,
+                "field_key":  mf.field_key,
+                "label":      mf.label,
+                "field_type": mf.field_type,
+                "sort_order": mf.default_sort_order,
+                "is_enabled":  client_field.is_enabled if client_field else False,
+            })
+
+        sections_out.append({
+            "section_id":   ms.id,
+            "code":         ms.code,
+            "name":         ms.name,
+            "is_repeatable": ms.is_repeatable,
+            "sort_order":   ms.default_sort_order,
+            "is_enabled":   client_section.is_enabled   if client_section else False,
+            "comment_text": client_section.comment_text if client_section else None,
+            "fields":       fields_out,
         })
 
     return {
-        "sections": response_sections
+        "client_id": client_id,
+        "sections":  sections_out,
     }

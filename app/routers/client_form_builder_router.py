@@ -6,7 +6,8 @@ from app.utils.submission_guard import ensure_not_submitted
 
 from app.schemas.client_form_builder_schema import (
     FormConfigCreate,
-    FormConfigResponse
+    FormConfigResponse,
+    FormUIConfigResponse,
 )
 
 from app.services.client_form_builder_service import (
@@ -41,7 +42,7 @@ def create_or_update_form_config(
 
 # GET FORM CONFIG
 
-@router.get("/config", response_model=FormConfigResponse)
+@router.get("/config", response_model=FormUIConfigResponse)
 def fetch_form_config(
     current_client = Depends(get_current_client)
 ):
