@@ -29,9 +29,23 @@ def sanitize_filename(filename: str) -> str:
     Remove spaces and special characters from filename
     """
     name = filename.rsplit(".", 1)[0]
-    name = re.sub(r"\s+", "_", name)          # replace spaces with underscore
-    name = re.sub(r"[^\w\-]", "", name)       # remove special characters
+    name = re.sub(r"\s+", "_", name)       # replace spaces with underscore
+    name = re.sub(r"[^\w\-]", "", name)    # remove special characters
     return name
+
+
+def get_resource_type(content_type: str) -> str:
+    """
+    Determine Cloudinary resource type based on MIME type.
+    """
+    if content_type.startswith("image/"):
+        return "image"
+
+    if content_type == "application/pdf":
+        return "raw"
+
+    # fallback for docs, zip, etc.
+    return "raw"
 
 
 def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
@@ -56,24 +70,44 @@ def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
         # Read file content
         file_content = file.file.read()
 
+        if not file_content:
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file is empty."
+            )
+
         # Clean filename
         clean_filename = sanitize_filename(file.filename)
 
-        # Upload to Cloudinary
+        # Determine resource type
+        resource_type = get_resource_type(file.content_type)
+
+        # Upload file to Cloudinary
         upload_result = cloudinary.uploader.upload(
             file_content,
             folder=folder,
-            resource_type="auto",     # Automatically detect image/pdf/other
+            resource_type=resource_type,
             public_id=clean_filename,
             use_filename=True,
             unique_filename=True
         )
 
-        # Reset file pointer if needed later
+        # Reset file pointer (important if reused later)
         file.file.seek(0)
 
-        # Return secure URL
-        return upload_result.get("secure_url")
+        # Extract secure URL
+        secure_url = upload_result.get("secure_url")
+
+        if not secure_url:
+            raise HTTPException(
+                status_code=500,
+                detail="Cloudinary did not return a valid URL."
+            )
+
+        return secure_url
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         logger.error(f"Cloudinary Upload Error: {str(e)}")
