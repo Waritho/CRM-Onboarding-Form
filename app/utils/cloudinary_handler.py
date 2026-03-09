@@ -87,18 +87,26 @@ def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
 
         # Clean filename
         clean_filename = sanitize_filename(file.filename)
+        
+        # Get file extension
+        file_extension = get_file_extension(file.filename)
 
         # Determine resource type
         resource_type = get_resource_type(file.content_type)
+
+        # For raw files, include extension in public_id for proper content-type handling
+        public_id = clean_filename
+        if resource_type == "raw" and file_extension:
+            public_id = f"{clean_filename}.{file_extension}"
 
         # Upload file to Cloudinary
         upload_result = cloudinary.uploader.upload(
             file_content,
             folder=folder,
             resource_type=resource_type,
-            public_id=clean_filename,
-            use_filename=True,
-            unique_filename=True
+            public_id=public_id,
+            overwrite=True,  # Allow overwriting if file with same name exists
+            resource_type_format="auto",  # Let Cloudinary automatically detect format
         )
 
         # Reset file pointer (important if reused later)
@@ -112,13 +120,6 @@ def upload_to_cloudinary(file: UploadFile, folder: str = "crm_docs") -> str:
                 status_code=500,
                 detail="Cloudinary did not return a valid URL."
             )
-
-        # For raw files (PDFs, docs), append the file extension to the URL
-        # This ensures browsers recognize the file type and handle it correctly
-        if resource_type == "raw":
-            file_extension = get_file_extension(file.filename)
-            if file_extension:
-                secure_url = f"{secure_url}.{file_extension}"
 
         return secure_url
 
