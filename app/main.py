@@ -17,6 +17,7 @@ from app.routers import client_form_builder_router
 from app.routers import client_domain_router
 from app.routers import client_onboarding_document_router
 from app.routers import client_payment_provider_router
+from app.routers import document_proxy_router
 
 app = FastAPI(title="CRM Onboarding System") 
 
@@ -62,6 +63,9 @@ app.include_router(client_payment_provider_router.router)
 # Client Submission
 from app.routers import client_submission_router
 app.include_router(client_submission_router.router)
+
+# Document Proxy Helper
+app.include_router(document_proxy_router.router)
 
 @app.get("/")
 def root():
