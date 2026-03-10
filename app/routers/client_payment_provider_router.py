@@ -4,7 +4,8 @@ from app.utils.submission_guard import ensure_not_submitted
 
 from app.schemas.client_payment_provider_schema import (
     PaymentProviderRequest,
-    PaymentProviderResponse
+    PaymentProviderResponse,
+    PaymentProviderHydrationResponse
 )
 
 from app.services.client_payment_provider_service import (
@@ -20,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[PaymentProviderResponse])
+@router.get("/", response_model=list[PaymentProviderHydrationResponse])
 def fetch_providers(
     token_data = Depends(get_current_client)
 ):

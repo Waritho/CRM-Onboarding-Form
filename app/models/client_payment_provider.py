@@ -36,8 +36,4 @@ class ClientPaymentProvider(Base):
     __table_args__ = (
         Index("idx_payment_client", "client_id"),
         Index("uq_client_provider", "client_id", "provider", unique=True),
-        CheckConstraint(
-            "provider IN ('razorpay','easy_buzz','ezypay','hdfc','payu')",
-            name="chk_payment_provider"
-        ),
     )

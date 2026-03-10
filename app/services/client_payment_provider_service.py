@@ -3,49 +3,68 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 
 from app.models.client_payment_provider import ClientPaymentProvider
-from app.utils.payment_provider_validators import (
-    validate_razorpay,
-    validate_easy_buzz,
-    validate_ezypay,
-    validate_hdfc,
-    validate_payu
-)
-
-
-VALIDATOR_MAP = {
-    "razorpay": validate_razorpay,
-    "easy_buzz": validate_easy_buzz,
-    "ezypay": validate_ezypay,
-    "hdfc": validate_hdfc,
-    "payu": validate_payu,
-}
+from app.models.payment_provider_master import PaymentProviderMaster
 
 
 def get_payment_providers(client_id: int, db: Session):
-    return db.query(ClientPaymentProvider).filter(
+    # 1. Fetch all active master providers
+    masters = db.query(PaymentProviderMaster).filter(
+        PaymentProviderMaster.is_active == True
+    ).all()
+
+    # 2. Fetch all client-configured providers
+    client_configs = db.query(ClientPaymentProvider).filter(
         ClientPaymentProvider.client_id == client_id
     ).all()
 
+    # 3. Create a map for O(1) lookup
+    client_map = {cfg.provider: cfg for cfg in client_configs}
 
-def upsert_payment_provider(client_id: int, provider: str, credentials: dict, db: Session):
+    # 4. Merge master data with client state
+    response = []
+    for master in masters:
+        client_cfg = client_map.get(master.code)
+        response.append({
+            "provider_code": master.code,
+            "provider_name": master.display_name,
+            "is_enabled": client_cfg.is_enabled if client_cfg else False,
+            "required_fields": master.required_fields,
+            "credentials": client_cfg.credentials if client_cfg else {}
+        })
 
-    if provider not in VALIDATOR_MAP:
-        raise HTTPException(status_code=400, detail="Invalid provider")
+    return response
 
-    validator = VALIDATOR_MAP[provider]
 
-    if not validator(credentials):
-        raise HTTPException(status_code=400, detail="Invalid credentials payload")
+def upsert_payment_provider(client_id: int, provider_code: str, credentials: dict, db: Session):
+    # 1. Fetch master provider record
+    master = db.query(PaymentProviderMaster).filter(
+        PaymentProviderMaster.code == provider_code,
+        PaymentProviderMaster.is_active == True
+    ).first()
 
+    if not master:
+        raise HTTPException(status_code=400, detail="Invalid or inactive payment provider")
+
+    # 2. Dynamic Validation: Check if all required fields are present
+    required_fields = master.required_fields or []
+    missing_fields = [f for f in required_fields if f not in credentials]
+    
+    if missing_fields:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Missing required credential fields: {', '.join(missing_fields)}"
+        )
+
+    # 3. Fetch or Create client-specific record
     record = db.query(ClientPaymentProvider).filter(
         ClientPaymentProvider.client_id == client_id,
-        ClientPaymentProvider.provider == provider
+        ClientPaymentProvider.provider == provider_code
     ).first()
 
     if not record:
         record = ClientPaymentProvider(
             client_id=client_id,
-            provider=provider,
+            provider=provider_code,
             credentials=credentials,
             is_enabled=True
         )
@@ -61,18 +80,17 @@ def upsert_payment_provider(client_id: int, provider: str, credentials: dict, db
 
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Database error")
+        raise HTTPException(status_code=400, detail="Database error or duplicate record")
 
 
-def disable_payment_provider(client_id: int, provider: str, db: Session):
-
+def disable_payment_provider(client_id: int, provider_code: str, db: Session):
     record = db.query(ClientPaymentProvider).filter(
         ClientPaymentProvider.client_id == client_id,
-        ClientPaymentProvider.provider == provider
+        ClientPaymentProvider.provider == provider_code
     ).first()
 
     if not record:
-        return None
+        raise HTTPException(status_code=404, detail="Payment provider configuration not found")
 
     record.is_enabled = False
     db.commit()
