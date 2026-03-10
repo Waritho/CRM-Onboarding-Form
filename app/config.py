@@ -30,10 +30,12 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = Field(default="redis://127.0.0.1:6379/0", env="CELERY_BROKER_URL")
     CELERY_RESULT_BACKEND: str = Field(default="redis://127.0.0.1:6379/1", env="CELERY_RESULT_BACKEND")
 
-    # ====== Cloudinary (optional — defaults to empty so app starts) ======
-    CLOUDINARY_CLOUD_NAME: str = Field(default="", env="CLOUDINARY_CLOUD_NAME")
-    CLOUDINARY_API_KEY: str = Field(default="", env="CLOUDINARY_API_KEY")
-    CLOUDINARY_API_SECRET: str = Field(default="", env="CLOUDINARY_API_SECRET")
+    # ====== AWS S3 ======
+    AWS_ACCESS_KEY_ID: str = Field(default="", env="AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY: str = Field(default="", env="AWS_SECRET_ACCESS_KEY")
+    AWS_REGION_NAME: str = Field(default="ap-south-1", env="AWS_REGION_NAME")
+    AWS_S3_BUCKET_NAME: str = Field(default="", env="AWS_S3_BUCKET_NAME")
+    S3_PRESIGNED_URL_EXPIRY_SECONDS: int = Field(default=1200, env="S3_PRESIGNED_URL_EXPIRY_SECONDS")  # 20 minutes
 
     class Config:
         env_file = ".env"

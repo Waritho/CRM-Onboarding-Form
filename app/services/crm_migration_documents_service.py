@@ -5,7 +5,7 @@ from fastapi import HTTPException, UploadFile
 from app.models.crm_migration_documents import CRMMigrationDocument
 from app.models.document_types import DocumentType
 from app.models.client_crm_info import ClientCRMInfo
-from app.utils.cloudinary_handler import upload_to_cloudinary
+from app.utils.s3_handler import upload_to_s3, generate_presigned_url
 
 
 # GET ALL DOCUMENTS FOR CLIENT
@@ -37,7 +37,7 @@ def get_client_documents(client_id: int, db: Session):
         response.append({
             "document_type_id": dt.id,
             "name": dt.name,
-            "file_path": doc.file_path if doc else None
+            "file_path": generate_presigned_url(doc.file_path) if doc and doc.file_path else None
         })
 
     return response
@@ -71,8 +71,8 @@ def upload_document(
     if not doc_type:
         raise HTTPException(status_code=404, detail="Invalid document type")
 
-    # -------- UPLOAD TO CLOUDINARY --------
-    file_path = upload_to_cloudinary(
+    # -------- UPLOAD TO S3 --------
+    file_path = upload_to_s3(
         file=file,
         folder=f"migration/client_{client_id}/document_type_{document_type_id}"
     )
