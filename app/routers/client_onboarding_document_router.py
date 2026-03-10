@@ -27,14 +27,7 @@ def fetch_documents(
     token_data, db = token_data
     client_id = token_data.id
 
-    documents = get_all_documents(client_id, db)
-    
-    # Generate presigned URLs for each document URL
-    for doc in documents:
-        if hasattr(doc, "url") and doc.url:
-            doc.url = generate_presigned_url(doc.url)
-            
-    return documents
+    return get_all_documents(client_id, db)
 
 
 @router.post("/")
@@ -53,12 +46,20 @@ def upload_document(
         folder=f"onboarding/client_{client_id}"
     )
 
-    return upload_or_replace_document(
+    record = upload_or_replace_document(
         client_id,
         code,
         s3_object_key,
         db
     )
+    
+    return {
+        "id": record.id,
+        "client_id": record.client_id,
+        "document_id": record.document_id,
+        "file_url": generate_presigned_url(record.file_url),
+        "uploaded_at": record.uploaded_at
+    }
 
 
 @router.get("/validate")

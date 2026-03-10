@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.models.onboarding_document_master import OnboardingDocumentMaster
 from app.models.client_onboarding_documents import ClientOnboardingDocument
+from app.utils.s3_handler import generate_presigned_url
 
 # GET ALL DOCUMENTS
 
@@ -26,7 +27,7 @@ def get_all_documents(client_id: int, db: Session):
             "code": master.code,
             "name": master.name,
             "is_mandatory": master.is_mandatory,
-            "file_url": uploaded.file_url if uploaded else None,
+            "file_url": generate_presigned_url(uploaded.file_url) if uploaded and uploaded.file_url else None,
             "uploaded_at": uploaded.uploaded_at if uploaded else None
         })
 
