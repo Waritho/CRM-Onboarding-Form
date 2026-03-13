@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 from app.schemas.client_form_builder_schema import (
     FormConfigCreate,
@@ -26,10 +25,9 @@ router = APIRouter(
 @router.post("/config")
 def create_or_update_form_config(
     payload: FormConfigCreate,
-    current_client = Depends(get_current_client)
+    current_client = Depends(require_unsubmitted_form)
 ):
     current_client, db = current_client
-    ensure_not_submitted((current_client, db))
 
     upsert_form_config(
         db=db,

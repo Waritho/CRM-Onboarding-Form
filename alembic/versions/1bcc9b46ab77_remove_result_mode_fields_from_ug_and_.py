@@ -36,3 +36,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade not supported for data deletion."""
     pass
+

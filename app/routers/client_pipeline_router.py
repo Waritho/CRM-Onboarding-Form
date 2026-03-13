@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 from app.schemas.client_pipeline_schema import (
     PipelineConfigCreate,
@@ -25,10 +24,9 @@ router = APIRouter(
 @router.post("/config")
 def create_or_update_pipeline(
     payload: PipelineConfigCreate,
-    current_client = Depends(get_current_client)
+    current_client = Depends(require_unsubmitted_form)
 ):
     current_client, db = current_client
-    ensure_not_submitted((current_client, db))
     upsert_pipeline_config(
         db=db,
         client_id=current_client.id,

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, File, UploadFile, Form
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 from app.utils.s3_handler import upload_to_s3, generate_presigned_url
 
 from app.schemas.client_onboarding_document_schema import (
@@ -34,10 +33,9 @@ def fetch_documents(
 def upload_document(
     code: str = Form(...),
     file: UploadFile = File(...),
-    token_data = Depends(get_current_client)
+    token_data = Depends(require_unsubmitted_form)
 ):
     token_data, db = token_data
-    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     # Use the S3 utility to upload

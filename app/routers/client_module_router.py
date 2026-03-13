@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 from app.schemas.client_module_schema import (
     ClientModulesResponse,
@@ -32,33 +31,13 @@ def fetch_client_modules(
     return result
 
 
-# POST (FIRST TIME SAVE)
+# POST (FIRST TIME SAVE OR UPDATE)
 @router.post("", response_model=ClientModulesResponse)
 def create_client_modules(
     payload: ClientModulesUpsertRequest,
-    current_client = Depends(get_current_client),
+    current_client = Depends(require_unsubmitted_form),
 ):
     current_client, db = current_client
-    ensure_not_submitted((current_client, db))
-    try:
-        return upsert_client_modules(
-            client_id=current_client.id,
-            selected_module_ids=payload.selected_module_ids,
-            comment=payload.comment,
-            db=db
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-# PUT (UPDATE SELECTION)
-@router.put("", response_model=ClientModulesResponse)
-def update_client_modules(
-    payload: ClientModulesUpsertRequest,
-    current_client = Depends(get_current_client),   
-):
-    current_client, db = current_client
-    ensure_not_submitted((current_client, db))
     try:
         return upsert_client_modules(
             client_id=current_client.id,

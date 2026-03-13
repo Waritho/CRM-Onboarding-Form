@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 from app.schemas.client_payment_provider_schema import (
     PaymentProviderRequest,
@@ -34,10 +33,9 @@ def fetch_providers(
 @router.post("/")
 def save_provider(
     payload: PaymentProviderRequest,
-    token_data = Depends(get_current_client)
+    token_data = Depends(require_unsubmitted_form)
 ):
     token_data, db = token_data
-    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     return upsert_payment_provider(
@@ -51,10 +49,9 @@ def save_provider(
 @router.post("/disable/{provider}")
 def disable_provider(
     provider: str,
-    token_data = Depends(get_current_client)
+    token_data = Depends(require_unsubmitted_form)
 ):
     token_data, db = token_data
-    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     return disable_payment_provider(client_id, provider, db)

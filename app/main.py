@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.database import engine, Base
 
-from app.models import client, otp
+from app.models import client, otp, client_user
 from app.routers import auth_router
 
 from app.models import client_basic_details
@@ -22,6 +22,10 @@ app = FastAPI(title="CRM Onboarding System")
 
 # Auth Router
 app.include_router(auth_router.router)
+
+# Client Users Router
+from app.routers import client_user_router
+app.include_router(client_user_router.router)
 
 # Client Bacis Details Router 
 app.include_router(client_router.router)

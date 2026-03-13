@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 from app.schemas.client_schema import (
     ClientBasicDetailsSchema,
     ClientBasicDetailsResponse
@@ -20,11 +19,10 @@ router = APIRouter(prefix="/client", tags=["Client"])
 @router.post("/basic-details", response_model=ClientBasicDetailsResponse)
 def save_basic_details(
     data: ClientBasicDetailsSchema,
-    current_client = Depends(get_current_client),
+    current_client = Depends(require_unsubmitted_form),
     
 ):
     current_client, db = current_client
-    ensure_not_submitted((current_client, db))
     return upsert_basic_details(current_client.id, data, db)
 
 
@@ -39,14 +37,3 @@ def fetch_basic_details(
     if not details:
         raise HTTPException(status_code=404, detail="Details not found")
     return details
-
-
-# PUT UPDATE (OPTIONAL EXPLICIT)
-@router.put("/basic-details", response_model=ClientBasicDetailsResponse)
-def update_basic_details(
-    data: ClientBasicDetailsSchema,
-    current_client = Depends(get_current_client)
-):
-    current_client, db = current_client
-    ensure_not_submitted((current_client, db))
-    return upsert_basic_details(current_client.id, data, db)

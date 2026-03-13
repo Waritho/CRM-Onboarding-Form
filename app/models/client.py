@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, func, text
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 
@@ -11,3 +12,6 @@ class Client(Base):
     is_submitted = Column(Boolean, default=False, server_default=text('false'), nullable=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
+
+    # Relationships
+    users = relationship("ClientUser", back_populates="client", cascade="all, delete-orphan")

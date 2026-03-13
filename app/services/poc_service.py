@@ -56,9 +56,13 @@ def create_new_poc(client_id: int, data, db: Session):
 
 # GET ALL POCS
 def get_pocs_by_client(client_id: int, db: Session):
-    return db.query(ClientPOC).filter(
+    pocs = db.query(ClientPOC).filter(
         ClientPOC.client_id == client_id
     ).order_by(ClientPOC.id.desc()).all()
+
+    if not pocs:
+        raise HTTPException(status_code=404, detail="No POCs found")
+    return pocs
 
 
 # UPDATE POC

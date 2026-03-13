@@ -10,8 +10,7 @@ from app.services.client_tentative_counts_service import (
     get_tentative_counts
 )
 
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 router = APIRouter(prefix="/client/tentative-counts",tags=["Client Tentative Counts"])
 
@@ -32,10 +31,9 @@ def fetch_tentative_counts(
 @router.post("/", response_model=TentativeCountsResponse)
 def save_tentative_counts(
     data: TentativeCountsUpsert,
-    current_user=Depends(get_current_client)
+    current_user=Depends(require_unsubmitted_form)
 ):
     current_user, db = current_user
-    ensure_not_submitted((current_user, db))
     client_id = current_user.id
 
     record = upsert_tentative_counts(client_id, data, db)

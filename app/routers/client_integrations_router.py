@@ -13,8 +13,7 @@ from app.services.client_integrations_service import (
 )
 
 # your jwt dependency (same used everywhere)
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted 
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 
 router = APIRouter(
@@ -40,10 +39,9 @@ def fetch_integrations(
 @router.post("/")
 def save_integrations(
     payload: List[IntegrationConfig],
-    token_data: dict = Depends(get_current_client),
+    token_data: dict = Depends(require_unsubmitted_form),
 ):
     token_data, db = token_data
-    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     result = upsert_client_integrations(client_id, payload, db)

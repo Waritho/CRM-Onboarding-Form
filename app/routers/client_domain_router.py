@@ -7,8 +7,7 @@ from app.services.client_domain_service import (
     get_domain_config,
     upsert_domain_config
 )
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_unsubmitted_form
 
 
 router = APIRouter(
@@ -35,10 +34,9 @@ def fetch_domain_config(
 @router.post("/", response_model=DomainConfigResponse)
 def save_domain_config(
     payload: DomainConfigUpdate,
-    token_data = Depends(get_current_client),
+    token_data = Depends(require_unsubmitted_form),
 ):
     token_data, db = token_data
-    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     record = upsert_domain_config(client_id, payload, db)
