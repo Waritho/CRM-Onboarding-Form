@@ -7,8 +7,7 @@ from app.services.crm_migration_documents_service import (
     upload_document
 )
 from app.schemas.crm_migration_documents_schema import DocumentListResponse
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_write_access
 
 
 router = APIRouter(
@@ -34,10 +33,9 @@ def fetch_documents(
 def upload_client_document(
     document_type_id: int,
     file: UploadFile = File(...),
-    token_data = Depends(get_current_client)
+    token_data = Depends(require_write_access)
 ):
     token_data , db=token_data
-    ensure_not_submitted((token_data, db))
     client_id = token_data.id
 
     result = upload_document(client_id, document_type_id, file, db)

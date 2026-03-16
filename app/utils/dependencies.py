@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.utils.jwt_handler import decode_token
 from app.database import get_db
 from app.models.client import Client
+from app.models.client_user import ClientUser
 
 security = HTTPBearer()
 
@@ -20,7 +21,7 @@ def get_current_client(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token" 
-        )
+            )
 
     if payload.get("type") != "access":
         raise HTTPException(
@@ -63,6 +64,29 @@ def require_unsubmitted_form(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Form has already been submitted and cannot be modified."
         )
+    return client, db
+
+def require_write_access(
+    current_client = Depends(require_unsubmitted_form),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    client, db = current_client
+    token = credentials.credentials
+    payload = decode_token(token)
+    
+    role = payload.get("role", "primary")
+    if role == "primary":
+        return client, db
+        
+    email = payload.get("email")
+    if email:
+        sub_user = db.query(ClientUser).filter(ClientUser.email == email).first()
+        if sub_user and not sub_user.can_write:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to make changes to this form."
+            )
+            
     return client, db
 
 def require_primary_unsubmitted_form(

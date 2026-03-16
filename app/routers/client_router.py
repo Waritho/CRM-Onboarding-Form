@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 from app.schemas.client_schema import (
     ClientBasicDetailsSchema,
     ClientBasicDetailsResponse
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/client", tags=["Client"])
 @router.post("/basic-details", response_model=ClientBasicDetailsResponse)
 def save_basic_details(
     data: ClientBasicDetailsSchema,
-    current_client = Depends(require_unsubmitted_form),
+    current_client = Depends(require_write_access),
     
 ):
     current_client, db = current_client

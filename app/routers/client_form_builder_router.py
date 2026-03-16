@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 
 from app.schemas.client_form_builder_schema import (
     FormConfigCreate,
@@ -25,7 +25,7 @@ router = APIRouter(
 @router.post("/config")
 def create_or_update_form_config(
     payload: FormConfigCreate,
-    current_client = Depends(require_unsubmitted_form)
+    current_client = Depends(require_write_access)
 ):
     current_client, db = current_client
 

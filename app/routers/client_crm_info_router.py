@@ -11,7 +11,7 @@ from app.services.client_crm_info_service import (
     upsert_crm_info
 )
 
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 
 
 router = APIRouter(
@@ -36,7 +36,7 @@ def fetch_crm_info(
 @router.post("/", response_model=CRMInfoResponse)
 def save_crm_info(
     payload: CRMInfoUpdate,
-    token_data = Depends(require_unsubmitted_form),
+    token_data = Depends(require_write_access),
     
 ):
     token_data, db = token_data

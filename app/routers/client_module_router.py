@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 
 from app.schemas.client_module_schema import (
     ClientModulesResponse,
@@ -35,7 +35,7 @@ def fetch_client_modules(
 @router.post("", response_model=ClientModulesResponse)
 def create_client_modules(
     payload: ClientModulesUpsertRequest,
-    current_client = Depends(require_unsubmitted_form),
+    current_client = Depends(require_write_access),
 ):
     current_client, db = current_client
     try:

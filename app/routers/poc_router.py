@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.utils.dependencies import get_current_client
-from app.utils.submission_guard import ensure_not_submitted
+from app.utils.dependencies import get_current_client, require_write_access
 
 from app.schemas.poc_schema import (
     ClientPOCCreate,
@@ -25,10 +24,9 @@ router = APIRouter(
 @router.post("", response_model=ClientPOCResponse)
 def create_poc(
     data: ClientPOCCreate,
-    current_client = Depends(get_current_client)
+    current_client = Depends(require_write_access)
 ):
     current_client, db = current_client
-    ensure_not_submitted((current_client, db))
     return create_new_poc(current_client.id, data, db)
 
 
@@ -46,8 +44,7 @@ def get_all_pocs(
 def update_poc_details(
     poc_id: int,
     data: ClientPOCUpdate,
-    current_client = Depends(get_current_client),
+    current_client = Depends(require_write_access),
 ):
     current_client, db = current_client
-    ensure_not_submitted((current_client, db))
     return update_poc(current_client.id, poc_id, data, db)

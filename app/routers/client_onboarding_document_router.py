@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, UploadFile, Form
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 from app.utils.s3_handler import upload_to_s3, generate_presigned_url
 
 from app.schemas.client_onboarding_document_schema import (
@@ -33,7 +33,7 @@ def fetch_documents(
 def upload_document(
     code: str = Form(...),
     file: UploadFile = File(...),
-    token_data = Depends(require_unsubmitted_form)
+    token_data = Depends(require_write_access)
 ):
     token_data, db = token_data
     client_id = token_data.id

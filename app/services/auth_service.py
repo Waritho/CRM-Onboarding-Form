@@ -137,11 +137,11 @@ def verify_otp_service(email: str, otp: str, db: Session):
     db.commit()
 
     access_token = create_access_token(
-        data={"client_id": client_id_for_otp, "role": role}
+        data={"client_id": client_id_for_otp, "role": role, "email": email}
     )
 
     refresh_token = create_refresh_token(
-        data={"client_id": client_id_for_otp, "role": role}
+        data={"client_id": client_id_for_otp, "role": role, "email": email}
     )
 
     return {

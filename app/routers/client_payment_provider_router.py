@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 
 from app.schemas.client_payment_provider_schema import (
     PaymentProviderRequest,
@@ -33,7 +33,7 @@ def fetch_providers(
 @router.post("/")
 def save_provider(
     payload: PaymentProviderRequest,
-    token_data = Depends(require_unsubmitted_form)
+    token_data = Depends(require_write_access)
 ):
     token_data, db = token_data
     client_id = token_data.id
@@ -49,7 +49,7 @@ def save_provider(
 @router.post("/disable/{provider}")
 def disable_provider(
     provider: str,
-    token_data = Depends(require_unsubmitted_form)
+    token_data = Depends(require_write_access)
 ):
     token_data, db = token_data
     client_id = token_data.id

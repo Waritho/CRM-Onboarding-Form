@@ -25,4 +25,6 @@ class ClientUser(Base):
         nullable=False
     )
 
+    can_write = Column(Boolean, default=True, nullable=False)
+
     client = relationship("Client", back_populates="users")

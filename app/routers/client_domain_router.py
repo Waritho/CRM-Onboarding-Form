@@ -7,7 +7,7 @@ from app.services.client_domain_service import (
     get_domain_config,
     upsert_domain_config
 )
-from app.utils.dependencies import get_current_client, require_unsubmitted_form
+from app.utils.dependencies import get_current_client, require_write_access
 
 
 router = APIRouter(
@@ -34,7 +34,7 @@ def fetch_domain_config(
 @router.post("/", response_model=DomainConfigResponse)
 def save_domain_config(
     payload: DomainConfigUpdate,
-    token_data = Depends(require_unsubmitted_form),
+    token_data = Depends(require_write_access),
 ):
     token_data, db = token_data
     client_id = token_data.id
