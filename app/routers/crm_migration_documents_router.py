@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.crm_migration_documents_service import (
     get_client_documents,
-    upload_document
+    upload_document,
+    delete_document
 )
 from app.schemas.crm_migration_documents_schema import DocumentListResponse
 from app.utils.dependencies import get_current_client, require_write_access
@@ -39,4 +40,17 @@ def upload_client_document(
     client_id = token_data.id
 
     result = upload_document(client_id, document_type_id, file, db)
+    return result
+
+
+# DELETE DOCUMENT
+@router.delete("/{document_type_id}")
+def delete_client_document(
+    document_type_id: int,
+    token_data = Depends(require_write_access)
+):
+    token_data , db=token_data
+    client_id = token_data.id
+
+    result = delete_document(client_id, document_type_id, db)
     return result

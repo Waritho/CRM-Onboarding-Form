@@ -160,3 +160,27 @@ def generate_presigned_url(object_key: str, expiration: int = None) -> str:
     except Exception as e:
         logger.error(f"Error generating presigned URL for {object_key}: {e}")
         return object_key # Return raw key on error so UI handles it gracefully
+
+
+def delete_from_s3(object_key: str) -> bool:
+    """
+    Deletes an object from S3.
+    """
+    if not s3_client or not settings.AWS_S3_BUCKET_NAME:
+        logger.warning(f"AWS S3 is not configured, skipping deletion for {object_key}.")
+        return False
+        
+    # Skip deletion if it looks like an old Cloudinary HTTP URL
+    if object_key.startswith("http://") or object_key.startswith("https://"):
+        return False
+
+    try:
+        s3_client.delete_object(
+            Bucket=settings.AWS_S3_BUCKET_NAME,
+            Key=object_key
+        )
+        logger.info(f"Deleted {object_key} successfully from S3 bucket {settings.AWS_S3_BUCKET_NAME}")
+        return True
+    except Exception as e:
+        logger.error(f"Error deleting object {object_key} from S3: {e}")
+        return False

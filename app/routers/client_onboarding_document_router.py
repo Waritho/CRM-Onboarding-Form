@@ -9,7 +9,8 @@ from app.schemas.client_onboarding_document_schema import (
 from app.services.client_onboarding_document_service import (
     get_all_documents,
     upload_or_replace_document,
-    validate_mandatory_documents
+    validate_mandatory_documents,
+    delete_document
 )
 
 
@@ -70,3 +71,14 @@ def validate_documents(
     return {
         "all_mandatory_uploaded": validate_mandatory_documents(client_id, db)
     }
+
+
+@router.delete("/{code}")
+def remove_document(
+    code: str,
+    token_data = Depends(require_write_access)
+):
+    token_data, db = token_data
+    client_id = token_data.id
+
+    return delete_document(client_id, code, db)

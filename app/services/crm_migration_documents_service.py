@@ -5,7 +5,7 @@ from fastapi import HTTPException, UploadFile
 from app.models.crm_migration_documents import CRMMigrationDocument
 from app.models.document_types import DocumentType
 from app.models.client_crm_info import ClientCRMInfo
-from app.utils.s3_handler import upload_to_s3, generate_presigned_url
+from app.utils.s3_handler import upload_to_s3, generate_presigned_url, delete_from_s3
 
 
 # GET ALL DOCUMENTS FOR CLIENT
@@ -103,3 +103,31 @@ def upload_document(
         raise HTTPException(status_code=400, detail="Database error")
 
     return {"message": "File uploaded successfully"}
+
+
+# DELETE DOCUMENT
+def delete_document(
+    client_id: int,
+    document_type_id: int,
+    db: Session
+):
+    record = db.query(CRMMigrationDocument).filter(
+        CRMMigrationDocument.client_id == client_id,
+        CRMMigrationDocument.document_type_id == document_type_id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Delete from S3
+    if record.file_path:
+        delete_from_s3(record.file_path)
+
+    try:
+        db.delete(record)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Database error")
+
+    return {"message": "Document deleted successfully"}

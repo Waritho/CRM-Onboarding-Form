@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.models.onboarding_document_master import OnboardingDocumentMaster
 from app.models.client_onboarding_documents import ClientOnboardingDocument
-from app.utils.s3_handler import generate_presigned_url
+from app.utils.s3_handler import generate_presigned_url, delete_from_s3
 
 # GET ALL DOCUMENTS
 
@@ -86,3 +86,32 @@ def validate_mandatory_documents(client_id: int, db: Session):
         return False
 
     return True
+
+# DELETE DOCUMENT
+def delete_document(client_id: int, code: str, db: Session):
+    master = db.query(OnboardingDocumentMaster).filter(
+        OnboardingDocumentMaster.code == code
+    ).first()
+
+    if not master:
+        raise HTTPException(status_code=404, detail="Invalid document code")
+
+    record = db.query(ClientOnboardingDocument).filter(
+        ClientOnboardingDocument.client_id == client_id,
+        ClientOnboardingDocument.document_id == master.id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    if record.file_url:
+        delete_from_s3(record.file_url)
+
+    try:
+        db.delete(record)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Database error")
+
+    return {"message": "Document deleted successfully"}
